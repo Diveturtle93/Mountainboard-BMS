@@ -1,11 +1,12 @@
 //----------------------------------------------------------------------
-// Titel	:	Batteriemanagementsystem Mountainboard
+// Titel		:	Batteriemanagementsystem Mountainboard
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	11.01.2020
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS Mountainboard
+// Sprache		:	C
+// Datum		:	11.01.2020
+// Version		:	1.0
+// Autor		:	Frederik Hafemeister
+// Projekt		:	BMS Mountainboard
+// Controller	:	AtMega328P-AU
 //----------------------------------------------------------------------
 
 // Einfügen der Include-Dateien
@@ -36,7 +37,6 @@
 //----------------------------------------------------------------------
 volatile uint8_t millisekunden_flag_1 = 0;								// Flag um 1ms Task zu speichern und auszuführen
 uint8_t rx0_receive;										    		// Variable um UART0 Daten zu speichern
-//uint16_t EEMEM eeData = 12345;
 //----------------------------------------------------------------------
 
 // TIMER1 Overflow Interrupt-Routine
@@ -61,20 +61,19 @@ ISR(USART_RX_vect)														// USART0 für ATmega128, USART für ATmega328
 int main(void)
 {
 	// Variablen definieren
-	uint8_t modus = 2;													// Zähler für Programm, 8 Bit
+	uint8_t modus = 2, eeCounter = 0;									// Zähler für Programm, 8 Bit
 	uint16_t count = 0;													// Zähler für Programm, 16 Bit
 	uint16_t temperatur[2] = {0};										// Array um Temperatur zu speichern
 	uint16_t spannungen[12] = {0};										// Array um Spannungen zu speichern
-	uint8_t stat[16] = {0};
-	uint8_t data[32] = {0};
-	uint16_t temp = 0, cmd = RDCFG;
-	uint8_t min = 0, min_tmp = 0, max = 0, max_tmp = 0;					// Zelle mit Minimal und Maximal Spannung
-	uint16_t V_min = 42000, V_max = 0, V_mean = 0;						// Minimal und Maximal Spannung
+	uint8_t data[32] = {0};												// Array um Daten zu übertragen
+	uint16_t temp = 0, cmd = RDCFG;										// Temporäre Variablen
+	uint8_t min = 0, max = 0;											// Zelle mit Minimal und Maximal Spannung
+	uint16_t V_min = 42000, V_max = 0, V_mean = 0;						// Minimal, Maximal und Mittel Spannung
 	
 	// IO-Ports einstellen
-	DDRB = 0xFF;														// Setzen Port B als Ausgang
-	DDRC = 0xFF;														// Setzen Port C als Ausgang
-	DDRD = 0xFF;														// Setzen Port D als Ausgang
+	DDRB = 0x2C;														// Setzen SPI Leitungen von Port B
+	DDRC = 0x00;														// Setzen Port C als Eingang
+	DDRD = 0xE0;														// Oberen drei Bits von Port D als Ausgang
 	
 	// Hardware konfigurieren
 	spi_initmaster();													// Initialisiere SPI-Schnittstelle
@@ -83,16 +82,22 @@ int main(void)
 	uart0_string("\r\n");
 	uart0_string("Starte System\r\n");
 	
-	if ((temp = ltc6804_check()) != 0)									// LTC6804 Selftest durchführen
+	for (uint8_t i = 0; i < 3; i++)
 	{
-		uart0_string("Selftest failed\r\n");							// Ausgabe bei Fehlerhaftem Selbsttest
-		TCCR1B = 0;														// Timer Stoppen
-		PORTD |=  (1<<PIND7);											// Ausgabe auf LEDs
-		uart0_number_16(temp);
-		uart0_string("\r\n");
-		
-		return 0;														// Programm abbrechen
-	}	
+		if ((temp = ltc6804_check()) != 0)								// LTC6804 Selftest durchführen
+		{
+			uart0_string("Selftest failed\r\n");						// Ausgabe bei Fehlerhaftem Selbsttest
+			TCCR1B = 0;													// Timer Stoppen
+			
+			eeCounter = eeprom_read_byte(&eeFehlerZaehler);				// Zähler für Fehlerspeicher auslesen
+			eeprom_write_byte(&eeFehlerSpeicher[eeCounter], temp);		// Fehler speichern
+			eeCounter--;
+			eeprom_write_byte(&eeFehlerZaehler, eeCounter);				// Fehlerzähler herunterzählen
+			return 0;													// Programm abbrechen nach drei Fehlversuchen
+		}
+		else
+			break;														// Schleife abbrechen; normal weiter; Initialisierung LTC6804 erfolgreich
+	}
 	
 	init_Timer1();														// Initialisiere Timer 1 und schalte diesen ein
 	
@@ -105,7 +110,7 @@ int main(void)
 	ltc6804(CLRSTAT);
 	ltc6804(CLRAUX);
 	
-	ltc6804(ADCVAX | MD73 | CELLALL);									// Initial Command Zellen auslesen
+	ltc6804(ADCVAX | MD73 | CELLALL);									// Initial Command Zellen auslesen; Daten fallen lassen, da nicht benötigt
 	
 	// Starte Endlosschleife
 	while(1)
@@ -114,20 +119,7 @@ int main(void)
 		if (rx0_receive == 'c')
 		{
 			modus = 1;
-			count = 1;
 		}
-		
-		if (rx0_receive == 'd')
-		{
-			modus = 2;
-			count = 1;
-		}
-		
-		if (rx0_receive == 's')
-		{
-			modus = 0;
-		}
-		
 		rx0_receive = 0;
 		
 		// Task wird jede Millisekunde ausgeführt
@@ -140,77 +132,28 @@ int main(void)
 		// Task wird alle 500ms ausgeführt
 		if ((count % 500) == 0)
 		{
-			ltc6804(ADCVC | MD2714 | CELLALL);
-			ltc6804_read(RDCVA, &data[0]);
-			ltc6804_read(RDCVB, &data[6]);
-			ltc6804_read(RDCVC, &data[12]);
-			ltc6804_read(RDCVD, &data[18]);
+			ltc6804(ADCVC | MD2714 | CELLALL);							// Zellspannungen einlesen und in Register speichern
+			ltc6804_read(RDCVA, &data[0]);								// Zellspannungen aus Register auslesen (Zelle 1 - 3)
+			ltc6804_read(RDCVB, &data[6]);								// Zellspannungen aus Register auslesen (Zelle 4 - 6)
+			ltc6804_read(RDCVC, &data[12]);								// Zellspannungen aus Register auslesen (Zelle 7 - 9)
+			ltc6804_read(RDCVD, &data[18]);								// Zellspannungen aus Register auslesen (Zelle 10 - 12)
 			
 			for (uint8_t i = 0; i < 12; i++)
 			{
 				spannungen[i] = ((data[i*2+1]<<8) | data[i*2]);
 				cmd = spannungen[i];
-				
-				/*if ((cmd <= 30000) && (modus == 2))
-				{
-					PORTD |= (1<<PIND6);								// Ausgabe auf LEDs
-					uart0_string("Unterspannung erkannt\t");
-					uart0_number_16(i+1);
-					uart0_string("  ");
-					uart0_number_16(cmd);
-					uart0_string("\r\n");
-										
-					for (uint8_t j = 0; j < 12; j++)
-					{
-						cmd = spannungen[j];
-						
-						uart0_number_16(cmd);
-						uart0_string("; ");
-					}
-					
-					uart0_string("\r\n");
-					//TCCR1B = 0;
-					PORTD |= (1<<PIND6);								// Ausgabe auf LEDs
-					//eeprom_write_word(&eeData, temp);
-					//return 0;
-				}
-				else if ((cmd >= 41000) && (modus == 1))
-				{
-					PORTD |= (1<<PIND6);								// Ausgabe auf LEDs
-					uart0_string("Uberspannung erkannt\t");
-					uart0_number_16(i+1);
-					uart0_string("  ");
-					uart0_number_16(cmd);
-					uart0_string("\r\n");
-					
-					for (uint8_t j = 0; j < 12; j++)
-					{
-						cmd = spannungen[j];
-						
-						uart0_number_16(cmd);
-						uart0_string("; ");
-					}
-					
-					uart0_string("\r\n");
-					//TCCR1B = 0;
-					PORTD |= (1<<PIND6);								// Ausgabe auf LEDs
-					//eeprom_write_word(&eeData, temp);
-					//return 0;
-				}
-				else
-					PORTD &= ~(1<<PIND6);*/
 			}
 		}
 		// Ende 500ms
 		
 		// Task wird alle 1s durchgeführt
-		if ((count % 2000) == 0)
+		if ((count % 1000) == 0)
 		{
 			
 		}
 		// Ende 1s
 		
-		// Task wird alle 2000ms durchgeführt			(Zeit zum balancen muss kleiner 1,5s sein. Sonst bricht der IC ab)
+		// Task wird alle 2s durchgeführt			(Zeit zum balancen muss kleiner 1,5s sein. Sonst bricht der IC ab)
 		if ((count % 2000) == 0)
 		{
 			V_max = 0;
@@ -223,11 +166,9 @@ int main(void)
 			V_mean = 0;
 			for (uint8_t i = 0; i < 12; i++)
 			{
-				V_mean = V_mean + spannungen[i]/12;
+				V_mean = V_mean + spannungen[i];
 			}
-			
-			//V_mean = ((stat[1] << 8) | stat[0]);
-			//V_mean = ((V_mean / 3) * 5);									// Mittelwert bilden
+			V_mean = V_mean/12;
 			
 			// Zelle mit Min und Max Spannung herausfinden
 			for (uint8_t i = 0; i < 12; i++)
@@ -245,36 +186,35 @@ int main(void)
 				}
 			}
 		}
-		// Ende 2000ms
+		// Ende 2s
 		
-		// Task wird alle 10s durchgeführt
+		// Task wird alle 2s durchgeführt, unter der Bedingung das Serielle Ausgabe gewünscht ist
 		if (((count % 2000) == 0) && (modus != 0))
 		{
-			temp++;
-			
 			for (uint8_t i = 0; i < 14; i++)
 			{
 				if (i >= 12)
-				cmd = temperatur[i-12];
+					cmd = temperatur[i-12];
 				else
-				cmd = spannungen[i];
+					cmd = spannungen[i];
 				
-				uart0_string("; ");
 				uart0_number_16(cmd);
+				uart0_string("; ");
 			}
 			
-			uart0_string("; ");
 			uart0_number_16(min+1);
 			uart0_string("; ");
 			uart0_number_16(max+1);
 			uart0_string("\r\n");
 		}
-		// Ende 10s
+		// Ende 2s
 		
+		// Task wird alle 10s durchgeführt
 		if(count == 10000)
 		{
 			
 		}
+		// Ende 10s
 	}
 }
 //----------------------------------------------------------------------
