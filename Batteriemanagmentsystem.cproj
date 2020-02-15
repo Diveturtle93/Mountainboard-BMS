@@ -142,7 +142,7 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="scource.c">
+    <Compile Include="source.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="spi_recourse.c">
