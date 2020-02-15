@@ -1,0 +1,3 @@
+Error 1			Fehler bei Selftest 1
+Error 2			Fehler bei Selftest 2		
+Error 3			Fehler bei Selftest 3		Open Wire
