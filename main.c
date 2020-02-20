@@ -60,18 +60,10 @@ ISR(USART_RX_vect)														// USART0 für ATmega128, USART für ATmega328
 
 // TIMER2 Overflow Interrupt-Routine für Sleep-Mode
 //----------------------------------------------------------------------
-ISR(TIMER2_OVF_vect)
+/*ISR(TIMER2_OVF_vect)
 {
-	asyncronExtension++;
-	if(asyncronExtension % 1000)
-	{
-		PORTD &= ~(1 << PORTD7);
-	}
-	else
-	{
-		PORTD |= (1 << PORTD7);
-	}
-}
+
+}*/
 //----------------------------------------------------------------------
 
 // Hauptprogramm
@@ -79,7 +71,7 @@ ISR(TIMER2_OVF_vect)
 int main(void)
 {
 	// Unbenutzte Hardware abschalten (1 = Off, 0 = On) (S. 54); TWI, Timer0 und ADC abschalten, Timer2 in Asyncron Modus
-	PRR = (1 << PRTWI) | (1 << PRTIM2) | (1 << PRTIM0) | (1 << PRADC);
+	PRR = (1 << PRTWI) | (1 << PRTIM2) | (1 << PRTIM0);
 	
 	// Variablen definieren
 	uint8_t modus = 2, eeCounter = 0;									// Zähler für Programm, 8 Bit
@@ -90,6 +82,7 @@ int main(void)
 	uint16_t temp = 0;													// Temporäre Variablen
 	uint8_t min = 0, max = 0;											// Zelle mit Minimal und Maximal Spannung
 	uint16_t V_min = 42000, V_max = 0, V_mean = 0;						// Minimal, Maximal und Mittel Spannung
+	float tmp;
 	
 	// IO-Ports einstellen
 	DDRB = 0x2C;														// Setzen SPI Leitungen von Port B
@@ -134,7 +127,7 @@ int main(void)
 	
 	ltc6804(ADCVAX | MD73 | CELLALL);									// Initial Command Zellen auslesen; Daten fallen lassen, da nicht benötigt
 	
-	wdt_enable(WDTO_2S);												// Watchdog einschalten auf 2s
+	//wdt_enable(WDTO_2S);												// Watchdog einschalten auf 2s
 	
 	// Starte Endlosschleife
 	while(1)
@@ -172,7 +165,13 @@ int main(void)
 		// Task wird alle 1s durchgeführt
 		if ((count % 1000) == 0)
 		{
+			temp = get_ADC();
+			tmp = (1100.0*1024.0)/temp;
 			
+			if (tmp <= 319.0)
+				PORTD |= (1<<PIND0);
+			else
+				PORTD &= ~(1<<PIND0);
 		}
 		// Ende 1s
 		
@@ -239,7 +238,7 @@ int main(void)
 		}
 		// Ende 10s
 		
-		wdt_reset()														// Watchdog zurücksetzen
+		//wdt_reset();													// Watchdog zurücksetzen
 	}
 }
 //----------------------------------------------------------------------

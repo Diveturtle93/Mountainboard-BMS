@@ -47,6 +47,8 @@ void init_Timer1(void);
 void Timer2_start(void);
 void sleep(void);
 void sleepDeep(void);
+void init_ADC(void);
+uint16_t get_ADC(void);
 //----------------------------------------------------------------------
 
 #endif

@@ -62,3 +62,27 @@ void sleepDeep(void)
 	sleep_mode();														// AVR in Sleep versetzen
 }
 //----------------------------------------------------------------------
+
+// ADC für Spannungsmessung
+//----------------------------------------------------------------------
+void init_ADC(void)
+{
+	ADCSRA = (1<<ADEN) | (0<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);  		// ADC ein, Free Run, Prescaler=128 (1000000Hz/128=125kHz)
+	ADMUX = (0<<REFS1) | (1<<REFS0) | (0<<ADLAR) | (1<<MUX3) | (1<<MUX2) | (1<<MUX1);			// Interne Referenzspannung 1,1V; Rechtsbündige Ausgabe
+	ADCSRA |= (1<<ADSC);												// Einzelermittlung der Spannung
+
+	while (ADCSRA & (1<<ADSC) );										// Warten bis Ermittlung abgeschlossen
+}
+//----------------------------------------------------------------------
+
+// ADC-Wert zurückgeben
+//----------------------------------------------------------------------
+uint16_t get_ADC(void)
+{
+	ADCSRA |= (1<<ADSC);												// Einzelermittlung der Spannung
+
+	while (ADCSRA & (1<<ADSC) );										// Warten bis Ermittlung abgeschlossen
+	
+	return ADC;															// ADC-Wert zurückgeben
+}
+//----------------------------------------------------------------------
