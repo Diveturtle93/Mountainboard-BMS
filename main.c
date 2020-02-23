@@ -22,6 +22,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
+#include <avr/wdt.h>
 //----------------------------------------------------------------------
 
 // Eigene Include-Dateien
@@ -30,13 +31,14 @@
 #include "spi_recourse.h"
 #include "uart_recourse.h"
 #include "source.h"
-//#include "eemem.h"
+#include "eemem.h"
 //----------------------------------------------------------------------
 
 // Variablen definieren
 //----------------------------------------------------------------------
 volatile uint8_t millisekunden_flag_1 = 0;								// Flag um 1ms Task zu speichern und auszuführen
-uint8_t rx0_receive;										    		// Variable um UART0 Daten zu speichern
+uint8_t rx0_receive = 0;									    		// Variable um UART0 Daten zu speichern
+volatile uint8_t asyncronExtension = 0;									// Variable für TIMER2, Sleep-Mode
 //----------------------------------------------------------------------
 
 // TIMER1 Overflow Interrupt-Routine
@@ -56,17 +58,28 @@ ISR(USART_RX_vect)														// USART0 für ATmega128, USART für ATmega328
 }
 //----------------------------------------------------------------------
 
+// TIMER2 Overflow Interrupt-Routine für Sleep-Mode
+//----------------------------------------------------------------------
+/*ISR(TIMER2_OVF_vect)
+{
+
+}*/
+//----------------------------------------------------------------------
+
 // Hauptprogramm
 //----------------------------------------------------------------------
 int main(void)
 {
+	// Unbenutzte Hardware abschalten (1 = Off, 0 = On) (S. 54); TWI, Timer0 und ADC abschalten, Timer2 in Asyncron Modus
+	PRR = (1 << PRTWI) | (1 << PRTIM2) | (1 << PRTIM0);
+	
 	// Variablen definieren
 	uint8_t modus = 2, eeCounter = 0;									// Zähler für Programm, 8 Bit
 	uint16_t count = 0;													// Zähler für Programm, 16 Bit
 	uint16_t temperatur[2] = {0};										// Array um Temperatur zu speichern
 	uint16_t spannungen[12] = {0};										// Array um Spannungen zu speichern
 	uint8_t data[32] = {0};												// Array um Daten zu übertragen
-	uint16_t temp = 0, cmd = RDCFG;										// Temporäre Variablen
+	uint16_t temp = 0;													// Temporäre Variablen
 	uint8_t min = 0, max = 0;											// Zelle mit Minimal und Maximal Spannung
 	uint16_t V_min = 42000, V_max = 0, V_mean = 0;						// Minimal, Maximal und Mittel Spannung
 	float tmp;
@@ -86,9 +99,10 @@ int main(void)
 	
 	for (uint8_t i = 0; i < 3; i++)
 	{
-		/*if ((temp = ltc6804_check()) != 0)								// LTC6804 Selftest durchführen
+		temp = ltc6804_check();											// LTC6804 Selbsttest durchführen
+		if ((temp != 0) && (i == 2))									// Ausführen wenn Selbsttest dreimal fehlschlägt
 		{
-			uart0_string("Selftest failed\r\n");						// Ausgabe bei Fehlerhaftem Selbsttest
+			uart0_string("Selbstest fehlgeschlagen\r\n");				// Ausgabe bei Fehlerhaftem Selbsttest
 			TCCR1B = 0;													// Timer Stoppen
 			
 			eeCounter = eeprom_read_byte(&eeFehlerZaehler);				// Zähler für Fehlerspeicher auslesen
@@ -98,7 +112,7 @@ int main(void)
 			return 0;													// Programm abbrechen nach drei Fehlversuchen
 		}
 		else
-			break;	*/													// Schleife abbrechen; normal weiter; Initialisierung LTC6804 erfolgreich
+			break;														// Schleife abbrechen; normal weiter; Initialisierung LTC6804 erfolgreich
 	}
 	
 	init_Timer1();														// Initialisiere Timer 1 und schalte diesen ein
@@ -106,7 +120,7 @@ int main(void)
 	
 	sei();																// Globale Interrupts einschalten
 	
-	uart0_string("Selftest passed\r\n");
+	uart0_string("Selbsttest bestanden\r\n");
 	
 	// Alle Register zurücksetzen
 	ltc6804(CLRCELL);
@@ -115,15 +129,17 @@ int main(void)
 	
 	ltc6804(ADCVAX | MD73 | CELLALL);									// Initial Command Zellen auslesen; Daten fallen lassen, da nicht benötigt
 	
+	//wdt_enable(WDTO_2S);												// Watchdog einschalten auf 2s
+	
 	// Starte Endlosschleife
 	while(1)
 	{
-		// Uart legt Ladevorgang fest, Parameter c, d, s, t (Charge, Discharge, Stop, Status LTC3300)
-		if (rx0_receive == 'c')
+		// UART legt Modus fest, Parameter t (Ausgabe Zellspannungen UART)
+		if (rx0_receive == 't')
 		{
-			modus = 1;
+			modus = 1;													// Modus 1
+			rx0_receive = 0;											// Receive Variable zurücksetzen
 		}
-		rx0_receive = 0;
 		
 		// Task wird jede Millisekunde ausgeführt
 		if (millisekunden_flag_1 == 1)
@@ -143,8 +159,7 @@ int main(void)
 			
 			for (uint8_t i = 0; i < 12; i++)
 			{
-				spannungen[i] = ((data[i*2+1]<<8) | data[i*2]);
-				cmd = spannungen[i];
+				spannungen[i] = ((data[i*2+1]<<8) | data[i*2]);			// Daten sortieren und in Array Spannung speichern
 			}
 		}
 		// Ende 500ms
@@ -165,55 +180,55 @@ int main(void)
 		// Task wird alle 2s durchgeführt			(Zeit zum balancen muss kleiner 1,5s sein. Sonst bricht der IC ab)
 		if ((count % 2000) == 0)
 		{
-			V_max = 0;
-			V_min = 42000;
+			V_max = 0;													// V_max auf 0 setzen um Maximalspannung zu ermitteln
+			V_min = 42000;												// V_min auf 42000 setzen um Minimalspannung zu ermitteln
 			
 			// Mittelwert der Spannungnen bilden
 			//ltc6804(ADSTAT | MD73 | STATSOC);							// SOC messen
 			//ltc6804_read(RDSTATA, &stat[0]);
 			
-			V_mean = 0;
+			V_mean = 0;													// V_mean auf 0 setzen um Mittelwertspannung zu ermitteln
 			for (uint8_t i = 0; i < 12; i++)
 			{
-				V_mean = V_mean + spannungen[i];
+				V_mean += spannungen[i];								// Zellspannungen aufaddieren
 			}
-			V_mean = V_mean/12;
+			V_mean = V_mean/12;											// Mittelwert der 12 Zellen berechnen
 			
 			// Zelle mit Min und Max Spannung herausfinden
 			for (uint8_t i = 0; i < 12; i++)
 			{
-				if (spannungen[i] < V_min)
+				if (spannungen[i] < V_min)								// Zellspannugen mit V_min vergleichen
 				{
-					V_min = spannungen[i];
-					min = i;
+					V_min = spannungen[i];								// Wenn Zellsapnnug kleiner V_min ist, V_min überschreiben
+					min = i;											// Minimalzelle zwischenspeichern
 				}
 				
-				if (spannungen[i] > V_max)
+				if (spannungen[i] > V_max)								// Zellspannugen mit V_max vergleichen
 				{
-					V_max = spannungen[i];
-					max = i;
+					V_max = spannungen[i];								// Wenn Zellsapnnug größer V_max ist, V_max überschreiben
+					max = i;											// Maximalzelle zwischenspeichern
 				}
 			}
 		}
 		// Ende 2s
 		
 		// Task wird alle 2s durchgeführt, unter der Bedingung das Serielle Ausgabe gewünscht ist
-		if (((count % 2000) == 0) && (modus != 0))
+		if (((count % 2000) == 0) && (modus == 1))
 		{
-			for (uint8_t i = 0; i < 14; i++)
+			for (uint8_t i = 0; i < 14; i++)							// Zähler hochzählen um Arraywert auszuwählen
 			{
 				if (i >= 12)
-					cmd = temperatur[i-12];
+					temp = temperatur[i-12];							// Wenn Zählerwert größer 12 ist Temperaturwert auswählen
 				else
-					cmd = spannungen[i];
+					temp = spannungen[i];								// Solange Zählerwert kleiner 12 ist Zellspannung auswählen
 				
-				uart0_number_16(cmd);
+				uart0_number_16(temp);									// Spannungs- oder Temperaturwert ausgeben
 				uart0_string("; ");
 			}
 			
-			uart0_number_16(min+1);
+			uart0_number_16(min+1);										// Zelle mit Minimalspannung ausgeben
 			uart0_string("; ");
-			uart0_number_16(max+1);
+			uart0_number_16(max+1);										// Zelle mit Maximalspannung ausgeben
 			uart0_string("\r\n");
 		}
 		// Ende 2s
@@ -221,9 +236,11 @@ int main(void)
 		// Task wird alle 10s durchgeführt
 		if(count == 10000)
 		{
-			
+			count = 0;													// Timer Counter zurücksetzen
 		}
 		// Ende 10s
+		
+		//wdt_reset();													// Watchdog zurücksetzen
 	}
 }
 //----------------------------------------------------------------------

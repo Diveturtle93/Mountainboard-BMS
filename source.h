@@ -9,8 +9,8 @@
 // Controller	:	AtMega328P-AU
 //----------------------------------------------------------------------
 
-#ifndef SCOURCE_H
-#define SCOURCE_H
+#ifndef SOURCE_H
+#define SOURCE_H
 
 // Pins definieren
 //----------------------------------------------------------------------
@@ -58,6 +58,9 @@
 // Funktionen definieren
 //----------------------------------------------------------------------
 void init_Timer1(void);
+void Timer2_start(void);
+void sleep(void);
+void sleepDeep(void);
 void init_ADC(void);
 uint16_t get_ADC(uint8_t channel);
 //----------------------------------------------------------------------
