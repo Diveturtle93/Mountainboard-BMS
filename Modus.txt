@@ -1,0 +1,2 @@
+Sende		Modus			Aktion
+t			1				Ausgabe Zellspannungen über serielle Schnittstelle einschalten
