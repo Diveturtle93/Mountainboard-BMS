@@ -40,10 +40,26 @@
 #define MAX1811_En							PD7
 //----------------------------------------------------------------------
 
+// Konstanten definieren
+//----------------------------------------------------------------------
+#define ADC_CH0								0
+#define ADC_CH1								1
+#define ADC_CH2								2
+#define ADC_CH3								3
+#define ADC_CH4								4
+#define ADC_CH5								5
+#define ADC_CH6								6
+#define ADC_CH7								7
+#define ADC_Temp							8
+#define ADC_Batt							14
+//----------------------------------------------------------------------
+
 
 // Funktionen definieren
 //----------------------------------------------------------------------
 void init_Timer1(void);
+void init_ADC(void);
+uint16_t get_ADC(uint8_t channel);
 //----------------------------------------------------------------------
 
 #endif

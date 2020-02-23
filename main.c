@@ -29,8 +29,8 @@
 #include "ltc6804.h"
 #include "spi_recourse.h"
 #include "uart_recourse.h"
-#include "scource.h"
-#include "eemem.h"
+#include "source.h"
+//#include "eemem.h"
 //----------------------------------------------------------------------
 
 // Variablen definieren
@@ -69,11 +69,13 @@ int main(void)
 	uint16_t temp = 0, cmd = RDCFG;										// Temporäre Variablen
 	uint8_t min = 0, max = 0;											// Zelle mit Minimal und Maximal Spannung
 	uint16_t V_min = 42000, V_max = 0, V_mean = 0;						// Minimal, Maximal und Mittel Spannung
+	float tmp;
 	
 	// IO-Ports einstellen
 	DDRB = 0x2C;														// Setzen SPI Leitungen von Port B
 	DDRC = 0x00;														// Setzen Port C als Eingang
-	DDRD = 0xE0;														// Oberen drei Bits von Port D als Ausgang
+	DDRD = 0xE1;														// Oberen drei Bits von Port D als Ausgang
+	PORTD = 0;
 	
 	// Hardware konfigurieren
 	spi_initmaster();													// Initialisiere SPI-Schnittstelle
@@ -84,7 +86,7 @@ int main(void)
 	
 	for (uint8_t i = 0; i < 3; i++)
 	{
-		if ((temp = ltc6804_check()) != 0)								// LTC6804 Selftest durchführen
+		/*if ((temp = ltc6804_check()) != 0)								// LTC6804 Selftest durchführen
 		{
 			uart0_string("Selftest failed\r\n");						// Ausgabe bei Fehlerhaftem Selbsttest
 			TCCR1B = 0;													// Timer Stoppen
@@ -96,10 +98,11 @@ int main(void)
 			return 0;													// Programm abbrechen nach drei Fehlversuchen
 		}
 		else
-			break;														// Schleife abbrechen; normal weiter; Initialisierung LTC6804 erfolgreich
+			break;	*/													// Schleife abbrechen; normal weiter; Initialisierung LTC6804 erfolgreich
 	}
 	
 	init_Timer1();														// Initialisiere Timer 1 und schalte diesen ein
+	init_ADC();															// Initialisiere AD-Wandler und schalte diesen ein
 	
 	sei();																// Globale Interrupts einschalten
 	
@@ -149,7 +152,13 @@ int main(void)
 		// Task wird alle 1s durchgeführt
 		if ((count % 1000) == 0)
 		{
+			temp = get_ADC(ADC_Batt);									// AD-Wandler einlesen; Batteriespannung; 1,1V gegen VCC
+			tmp = (1100.0*1024.0)/temp;									// Spannungsmessung in mV umrechnen
 			
+			if (tmp <= 3400.0)
+				PORTD |= (1<<PIND7);
+			else
+				PORTD &= ~(1<<PIND7);
 		}
 		// Ende 1s
 		
