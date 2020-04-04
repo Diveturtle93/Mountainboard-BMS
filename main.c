@@ -9,7 +9,7 @@
 // Controller	:	AtMega328P-AU
 //----------------------------------------------------------------------
 
-// Einfügen der Include-Dateien
+// Einfï¿½gen der Include-Dateien
 //----------------------------------------------------------------------
 // F_CPU muss vorher definiert werden, damit die Bibliothek (util/delay.h) funktioniert
 #define F_CPU 1000000UL
@@ -36,29 +36,29 @@
 
 // Variablen definieren
 //----------------------------------------------------------------------
-volatile uint8_t millisekunden_flag_1 = 0;								// Flag um 1ms Task zu speichern und auszuführen
+volatile uint8_t millisekunden_flag_1 = 0;								// Flag um 1ms Task zu speichern und auszufï¿½hren
 uint8_t rx0_receive = 0;									    		// Variable um UART0 Daten zu speichern
-volatile uint8_t asyncronExtension = 0;									// Variable für TIMER2, Sleep-Mode
+volatile uint8_t asyncronExtension = 0;									// Variable fï¿½r TIMER2, Sleep-Mode
 //----------------------------------------------------------------------
 
 // TIMER1 Overflow Interrupt-Routine
 //----------------------------------------------------------------------
 ISR(TIMER1_OVF_vect)
 {
-	millisekunden_flag_1 = 1;											// Nach auslösen des Interrupt setzen des Flags
-	TCNT1 = 65535-16000;												// Vorladewert für den 1ms interrupt
+	millisekunden_flag_1 = 1;											// Nach auslï¿½sen des Interrupt setzen des Flags
+	TCNT1 = 65535-16000;												// Vorladewert fï¿½r den 1ms interrupt
 }
 //----------------------------------------------------------------------
 
 // UART0 Receive Interrupt-Routine
 //----------------------------------------------------------------------
-ISR(USART_RX_vect)														// USART0 für ATmega128, USART für ATmega328
+ISR(USART_RX_vect)														// USART0 fï¿½r ATmega128, USART fï¿½r ATmega328
 {
 	rx0_receive = UDR0;													// Empfangene Daten in Variable speichern
 }
 //----------------------------------------------------------------------
 
-// TIMER2 Overflow Interrupt-Routine für Sleep-Mode
+// TIMER2 Overflow Interrupt-Routine fï¿½r Sleep-Mode
 //----------------------------------------------------------------------
 /*ISR(TIMER2_OVF_vect)
 {
@@ -74,12 +74,12 @@ int main(void)
 	PRR = (1 << PRTWI) | (1 << PRTIM2) | (1 << PRTIM0);
 	
 	// Variablen definieren
-	uint8_t modus = 2, eeCounter = 0;									// Zähler für Programm, 8 Bit
-	uint16_t count = 0;													// Zähler für Programm, 16 Bit
+	uint8_t modus = 2, eeCounter = 0;									// Zï¿½hler fï¿½r Programm, 8 Bit
+	uint16_t count = 0;													// Zï¿½hler fï¿½r Programm, 16 Bit
 	uint16_t temperatur[2] = {0};										// Array um Temperatur zu speichern
 	uint16_t spannungen[12] = {0};										// Array um Spannungen zu speichern
-	uint8_t data[32] = {0};												// Array um Daten zu übertragen
-	uint16_t temp = 0;													// Temporäre Variablen
+	uint8_t data[32] = {0};												// Array um Daten zu ï¿½bertragen
+	uint16_t temp = 0;													// Temporï¿½re Variablen
 	uint8_t min = 0, max = 0;											// Zelle mit Minimal und Maximal Spannung
 	uint16_t V_min = 42000, V_max = 0, V_mean = 0;						// Minimal, Maximal und Mittel Spannung
 	float tmp;
@@ -99,16 +99,16 @@ int main(void)
 	
 	for (uint8_t i = 0; i < 3; i++)
 	{
-		temp = ltc6804_check();											// LTC6804 Selbsttest durchführen
-		if ((temp != 0) && (i == 2))									// Ausführen wenn Selbsttest dreimal fehlschlägt
+		temp = ltc6804_check();											// LTC6804 Selbsttest durchfï¿½hren
+		if ((temp != 0) && (i == 2))									// Ausfï¿½hren wenn Selbsttest dreimal fehlschlï¿½gt
 		{
 			uart0_string("Selbstest fehlgeschlagen\r\n");				// Ausgabe bei Fehlerhaftem Selbsttest
 			TCCR1B = 0;													// Timer Stoppen
 			
-			eeCounter = eeprom_read_byte(&eeFehlerZaehler);				// Zähler für Fehlerspeicher auslesen
+			eeCounter = eeprom_read_byte(&eeFehlerZaehler);				// Zï¿½hler fï¿½r Fehlerspeicher auslesen
 			eeprom_write_byte(&eeFehlerSpeicher[eeCounter], temp);		// Fehler speichern
 			eeCounter--;
-			eeprom_write_byte(&eeFehlerZaehler, eeCounter);				// Fehlerzähler herunterzählen
+			eeprom_write_byte(&eeFehlerZaehler, eeCounter);				// Fehlerzï¿½hler herunterzï¿½hlen
 			return 0;													// Programm abbrechen nach drei Fehlversuchen
 		}
 		else
@@ -122,12 +122,12 @@ int main(void)
 	
 	uart0_string("Selbsttest bestanden\r\n");
 	
-	// Alle Register zurücksetzen
+	// Alle Register zurï¿½cksetzen
 	ltc6804(CLRCELL);
 	ltc6804(CLRSTAT);
 	ltc6804(CLRAUX);
 	
-	ltc6804(ADCVAX | MD73 | CELLALL);									// Initial Command Zellen auslesen; Daten fallen lassen, da nicht benötigt
+	ltc6804(ADCVAX | MD73 | CELLALL);									// Initial Command Zellen auslesen; Daten fallen lassen, da nicht benï¿½tigt
 	
 	//wdt_enable(WDTO_2S);												// Watchdog einschalten auf 2s
 	
@@ -138,17 +138,17 @@ int main(void)
 		if (rx0_receive == 't')
 		{
 			modus = 1;													// Modus 1
-			rx0_receive = 0;											// Receive Variable zurücksetzen
+			rx0_receive = 0;											// Receive Variable zurï¿½cksetzen
 		}
 		
-		// Task wird jede Millisekunde ausgeführt
+		// Task wird jede Millisekunde ausgefï¿½hrt
 		if (millisekunden_flag_1 == 1)
 		{
-			count++;													// Zähle count hoch
-			millisekunden_flag_1 = 0;									// Setze Millisekunden-Flag zurück
+			count++;													// Zï¿½hle count hoch
+			millisekunden_flag_1 = 0;									// Setze Millisekunden-Flag zurï¿½ck
 		}
 		
-		// Task wird alle 500ms ausgeführt
+		// Task wird alle 500ms ausgefï¿½hrt
 		if ((count % 500) == 0)
 		{
 			ltc6804(ADCVC | MD2714 | CELLALL);							// Zellspannungen einlesen und in Register speichern
@@ -164,20 +164,20 @@ int main(void)
 		}
 		// Ende 500ms
 		
-		// Task wird alle 1s durchgeführt
+		// Task wird alle 1s durchgefï¿½hrt
 		if ((count % 1000) == 0)
 		{
-			temp = get_ADC(ADC_Batt);									// AD-Wandler einlesen; Batteriespannung; 1,1V gegen VCC
-			tmp = (1100.0*1024.0)/temp;									// Spannungsmessung in mV umrechnen
+			temp = get_ADC();
+			tmp = (1100.0*1024.0)/temp;
 			
-			if (tmp <= 3400.0)
-				PORTD |= (1<<PIND7);
+			if (tmp <= 319.0)
+				PORTD |= (1<<PIND0);
 			else
-				PORTD &= ~(1<<PIND7);
+				PORTD &= ~(1<<PIND0);
 		}
 		// Ende 1s
 		
-		// Task wird alle 2s durchgeführt			(Zeit zum balancen muss kleiner 1,5s sein. Sonst bricht der IC ab)
+		// Task wird alle 2s durchgefï¿½hrt			(Zeit zum balancen muss kleiner 1,5s sein. Sonst bricht der IC ab)
 		if ((count % 2000) == 0)
 		{
 			V_max = 0;													// V_max auf 0 setzen um Maximalspannung zu ermitteln
@@ -199,28 +199,28 @@ int main(void)
 			{
 				if (spannungen[i] < V_min)								// Zellspannugen mit V_min vergleichen
 				{
-					V_min = spannungen[i];								// Wenn Zellsapnnug kleiner V_min ist, V_min überschreiben
+					V_min = spannungen[i];								// Wenn Zellsapnnug kleiner V_min ist, V_min ï¿½berschreiben
 					min = i;											// Minimalzelle zwischenspeichern
 				}
 				
 				if (spannungen[i] > V_max)								// Zellspannugen mit V_max vergleichen
 				{
-					V_max = spannungen[i];								// Wenn Zellsapnnug größer V_max ist, V_max überschreiben
+					V_max = spannungen[i];								// Wenn Zellsapnnug grï¿½ï¿½er V_max ist, V_max ï¿½berschreiben
 					max = i;											// Maximalzelle zwischenspeichern
 				}
 			}
 		}
 		// Ende 2s
 		
-		// Task wird alle 2s durchgeführt, unter der Bedingung das Serielle Ausgabe gewünscht ist
+		// Task wird alle 2s durchgefï¿½hrt, unter der Bedingung das Serielle Ausgabe gewï¿½nscht ist
 		if (((count % 2000) == 0) && (modus == 1))
 		{
-			for (uint8_t i = 0; i < 14; i++)							// Zähler hochzählen um Arraywert auszuwählen
+			for (uint8_t i = 0; i < 14; i++)							// Zï¿½hler hochzï¿½hlen um Arraywert auszuwï¿½hlen
 			{
 				if (i >= 12)
-					temp = temperatur[i-12];							// Wenn Zählerwert größer 12 ist Temperaturwert auswählen
+					temp = temperatur[i-12];							// Wenn Zï¿½hlerwert grï¿½ï¿½er 12 ist Temperaturwert auswï¿½hlen
 				else
-					temp = spannungen[i];								// Solange Zählerwert kleiner 12 ist Zellspannung auswählen
+					temp = spannungen[i];								// Solange Zï¿½hlerwert kleiner 12 ist Zellspannung auswï¿½hlen
 				
 				uart0_number_16(temp);									// Spannungs- oder Temperaturwert ausgeben
 				uart0_string("; ");
@@ -233,14 +233,14 @@ int main(void)
 		}
 		// Ende 2s
 		
-		// Task wird alle 10s durchgeführt
+		// Task wird alle 10s durchgefï¿½hrt
 		if(count == 10000)
 		{
-			count = 0;													// Timer Counter zurücksetzen
+			count = 0;													// Timer Counter zurï¿½cksetzen
 		}
 		// Ende 10s
 		
-		//wdt_reset();													// Watchdog zurücksetzen
+		//wdt_reset();													// Watchdog zurï¿½cksetzen
 	}
 }
 //----------------------------------------------------------------------

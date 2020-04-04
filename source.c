@@ -20,7 +20,7 @@ void init_Timer1(void)
 	TCCR1A = 0;
 	TCCR1B = (1<<CS00);													// Timer1 an, prescaler = 1
 	TIMSK1 = (1<<TOIE1);												// Timer1 Overflow Interrupt einschalten
-	TCNT1 = 65535-16000;												// Vorladewert für den 1ms interrupt
+	TCNT1 = 65535-16000;												// Vorladewert fï¿½r den 1ms interrupt
 }
 //----------------------------------------------------------------------
 
@@ -32,8 +32,8 @@ void Timer2_start(void)
 	PRR &=  ~(1 << PRTIM2);												// Power down ausschalten
 	
 	//Timer2; asynchron; slow; overflow interrupt
-	GTCCR |= (1 << PSRASY);												// Prescaler zurücksetzen
-	ASSR &= ~(1 << AS2);												// Asynchron Mode einschalten, Bit AS2 muss dafür Null sein
+	GTCCR |= (1 << PSRASY);												// Prescaler zurï¿½cksetzen
+	ASSR &= ~(1 << AS2);												// Asynchron Mode einschalten, Bit AS2 muss dafï¿½r Null sein
 	TCCR2A = 0;															// Keine Funktionen in der Signalform
 	TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);					// Prescaler auf 1024 stellen
 	TIMSK2 = (1 << TOIE2);												// Timer2 Overflow Interrupt einschalten
@@ -45,47 +45,47 @@ void Timer2_start(void)
 }
 //----------------------------------------------------------------------
 
-// Sleep für Power Down; Oscillator enable, Timer2 Asyncron, INT0 & INT1, TWI und WDT wecken AVR
+// Sleep fï¿½r Power Down; Oscillator enable, Timer2 Asyncron, INT0 & INT1, TWI und WDT wecken AVR
 //----------------------------------------------------------------------
 void sleep(void)
 {
-	SMCR = (0 << SM2) | (1 << SM1) | (1 << SM0);						// Sleep-Mode auf Power-Down ändern
+	SMCR = (0 << SM2) | (1 << SM1) | (1 << SM0);						// Sleep-Mode auf Power-Down ï¿½ndern
 	sleep_mode();														// AVR in Sleep versetzen
 }
 //----------------------------------------------------------------------
 
-// Sleep für Power Save; INT0 & INT1, TWI und WDT wecken AVR
+// Sleep fï¿½r Power Save; INT0 & INT1, TWI und WDT wecken AVR
 //----------------------------------------------------------------------
 void sleepDeep(void)
 {
-	SMCR = (0 << SM2) | (1 << SM1) | (0 << SM0);						// Sleep-Mode auf Power-Save ändern
+	SMCR = (0 << SM2) | (1 << SM1) | (0 << SM0);						// Sleep-Mode auf Power-Save ï¿½ndern
 	sleep_mode();														// AVR in Sleep versetzen
 }
 //----------------------------------------------------------------------
 
-// ADC für Spannungsmessung
+// ADC fï¿½r Spannungsmessung
 //----------------------------------------------------------------------
 void init_ADC(void)
 {
 	ADCSRA = (1<<ADEN) | (0<<ADPS2) | (1<<ADPS1) | (1<<ADPS0);  		// ADC ein; Free Run; Prescaler=8 (1000000Hz/8=125kHz)
-	ADMUX = (0<<REFS1) | (1<<REFS0) | (0<<ADLAR);						// Interne Referenzspannung 1,1V; Rechtsbündige Ausgabe; Channel = 0
+	ADMUX = (0<<REFS1) | (1<<REFS0) | (0<<ADLAR);						// Interne Referenzspannung 1,1V; Rechtsbï¿½ndige Ausgabe; Channel = 0
 	ADCSRA |= (1<<ADSC);												// Einzelermittlung der Spannung
 
 	while (ADCSRA & (1<<ADSC));											// Warten bis Ermittlung abgeschlossen
 }
 //----------------------------------------------------------------------
 
-// ADC-Wert zurückgeben
+// ADC-Wert zurï¿½ckgeben
 //----------------------------------------------------------------------
 uint16_t get_ADC(uint8_t channel)
 {
 	ADCSRA |= (1<<ADSC);												// Einzelermittlung der Spannung
-	ADMUX |= channel;													// Channel auswählen
+	ADMUX |= channel;													// Channel auswï¿½hlen
 	
 	while (ADCSRA & (1<<ADSC));											// Warten bis Ermittlung abgeschlossen
 	
-	//ADMUX &= 0b11100000;												// Channel wieder zurücksetzen
+	//ADMUX &= 0b11100000;												// Channel wieder zurï¿½cksetzen
 	
-	return ADC;															// ADC-Wert zurückgeben
+	return ADC;															// ADC-Wert zurï¿½ckgeben
 }
 //----------------------------------------------------------------------
