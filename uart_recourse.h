@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Titel	:	UART h-Code
+// Titel		:	UART h-Code
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	10.09.2018
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS
+// Sprache		:	C
+// Datum		:	10.09.2018
+// Version		:	1.0
+// Autor		:	Diveturtle93
+// Projekt		:	BMS
 //----------------------------------------------------------------------
 
 #ifndef UART_RECOURSE_H

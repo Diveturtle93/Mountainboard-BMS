@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Titel	:	SPI h-Code
+// Titel		:	SPI h-Code
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	05.09.2018
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS
+// Sprache		:	C
+// Datum		:	05.09.2018
+// Version		:	1.0
+// Autor		:	Diveturtle93
+// Projekt		:	BMS
 //----------------------------------------------------------------------
 
 #ifndef SPI_RECOURSE_H

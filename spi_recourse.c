@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Titel	:	SPI C-Code
+// Titel		:	SPI C-Code
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	05.09.2018
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS
+// Sprache		:	C
+// Datum		:	05.09.2018
+// Version		:	1.0
+// Autor		:	Diveturtle93
+// Projekt		:	BMS
 //----------------------------------------------------------------------
 
 #include <avr/io.h>

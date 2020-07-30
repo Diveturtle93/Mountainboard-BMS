@@ -4,7 +4,7 @@
 // Sprache		:	C
 // Datum		:	11.01.2020
 // Version		:	1.0
-// Autor		:	Frederik Hafemeister
+// Autor		:	Diveturtle93
 // Projekt		:	BMS Mountainboard
 // Controller	:	AtMega328P-AU
 //----------------------------------------------------------------------
@@ -167,7 +167,7 @@ int main(void)
 		// Task wird alle 1s durchgef�hrt
 		if ((count % 1000) == 0)
 		{
-			temp = get_ADC();
+			temp = get_ADC(ADC_Batt);
 			tmp = (1100.0*1024.0)/temp;
 			
 			if (tmp <= 319.0)

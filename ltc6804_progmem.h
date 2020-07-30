@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Titel	:	Lookup Table für Packet Error Code
+// Titel		:	Lookup Table für Packet Error Code
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	11.09.2018
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS
+// Sprache		:	C
+// Datum		:	11.09.2018
+// Version		:	1.0
+// Autor		:	Diveturtle93
+// Projekt		:	BMS
 //----------------------------------------------------------------------
 
 #include <avr/pgmspace.h>

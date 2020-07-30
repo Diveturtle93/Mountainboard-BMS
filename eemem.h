@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Titel	:	EEPROM Vorlade Tabelle 1 kByte = 1024 Byte
+// Titel		:	EEPROM Vorlade Tabelle 1 kByte = 1024 Byte
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	07.09.2018
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS
+// Sprache		:	C
+// Datum		:	07.09.2018
+// Version		:	1.0
+// Autor		:	Diveturtle93
+// Projekt		:	BMS
 //----------------------------------------------------------------------
 
 #include <stdint.h>

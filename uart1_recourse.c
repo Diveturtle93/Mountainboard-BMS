@@ -1,11 +1,11 @@
 //----------------------------------------------------------------------
-// Titel	:	UART C-Code
+// Titel		:	UART C-Code
 //----------------------------------------------------------------------
-// Sprache	:	C
-// Datum	:	10.09.2018
-// Version	:	1.0
-// Autor	:	Frederik Hafemeister
-// Projekt	:	BMS
+// Sprache		:	C
+// Datum		:	10.09.2018
+// Version		:	1.0
+// Autor		:	Diveturtle93
+// Projekt		:	BMS
 //----------------------------------------------------------------------
 
 #include <avr/io.h>

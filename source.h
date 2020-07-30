@@ -4,7 +4,7 @@
 // Sprache		:	C
 // Datum		:	15.02.2020
 // Version		:	1.0
-// Autor		:	Frederik Hafemeister
+// Autor		:	Diveturtle93
 // Projekt		:	BMS-Mountainboard
 // Controller	:	AtMega328P-AU
 //----------------------------------------------------------------------
